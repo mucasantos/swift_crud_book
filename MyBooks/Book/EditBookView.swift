@@ -106,7 +106,15 @@ struct EditBookView: View {
             TextEditor(text: $summary)
                 .padding(5)
                 .overlay(RoundedRectangle(cornerRadius: /*@START_MENU_TOKEN@*/25.0/*@END_MENU_TOKEN@*/).stroke( Color(uiColor: .tertiaryLabel), lineWidth: 2))
-            
+            NavigationLink {
+                QuotesListView(book: book)
+            }label: {
+                let count = book.quotes?.count ?? 0
+                Label("^[\(count) Quotes](inflect: true)", systemImage: "quote.opening")
+            }
+            .buttonStyle(.bordered)
+            .frame(maxWidth: /*@START_MENU_TOKEN@*/.infinity/*@END_MENU_TOKEN@*/, alignment: .trailing)
+            .padding(.horizontal)
         }
         .padding()
         .textFieldStyle(.roundedBorder)
