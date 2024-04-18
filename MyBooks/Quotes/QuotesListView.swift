@@ -83,17 +83,20 @@ struct QuotesListView: View {
                     page = quote.page ?? ""
                 }
             }
-            .onDelete(perform: { indexSet in
+            .onDelete { indexSet in
                 withAnimation {
                     indexSet.forEach { index in
-                        if let quote = book.quotes?[index]{
-                            modelContext.delete(quote)
+                         let quote = sortedQuotes[index]
+                             book.quotes?.forEach({ bookQuote in
+                                 if quote.id == bookQuote.id{
+                                     modelContext.delete(quote)
+
+                                 }
+                             })
                         }
                     }
                 }
-            })
-        }
-        
+            }
         .listStyle(.plain)
         .navigationTitle("Quotes")
     }

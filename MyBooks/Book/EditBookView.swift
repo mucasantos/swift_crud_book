@@ -12,7 +12,7 @@ struct EditBookView: View {
     
     let book: Book
     
-    @State private var status = Status.onShelf
+    @State private var status : Status
     @State private var rating: Int?
     @State private var title = ""
     @State private var author = ""
@@ -20,8 +20,13 @@ struct EditBookView: View {
     @State private var dateAdded = Date.distantPast
     @State private var dateStarted = Date.distantPast
     @State private var dateCompleted = Date.distantPast
-    @State private var firstView = true
     @State private var recommendedBy = ""
+    @State private var showGenres = false
+    
+    init(book:Book){
+        self.book = book
+        _status = State(initialValue: Status(rawValue: book.status)!)
+    }
     var body: some View {
         HStack{
             Text("Status")
@@ -36,7 +41,14 @@ struct EditBookView: View {
         VStack(alignment: .leading){
             GroupBox {
                 LabeledContent{
-                    DatePicker("", selection: $dateAdded, displayedComponents: .date)
+                    switch status {
+                    case .onShelf:
+                        DatePicker("", selection: $dateAdded, displayedComponents: .date)
+                    case .inProgress, .completed:
+                        DatePicker("", selection: $dateAdded, in: ...dateStarted,  displayedComponents: .date)
+                    }
+                    
+                   
                 }label: {
                     Text("Date added")
                 }
@@ -59,7 +71,7 @@ struct EditBookView: View {
             
             .foregroundStyle(.secondary)
             .onChange(of: status) { oldValue, newValue in
-                if !firstView{
+               
                     if newValue == .onShelf {
                         dateStarted = Date.distantPast
                         dateCompleted = Date.distantPast
@@ -77,8 +89,7 @@ struct EditBookView: View {
                         //completed
                         dateCompleted = Date.now
                     }
-                    firstView = false
-                }
+               
             }
             Divider()
             LabeledContent{
@@ -106,11 +117,27 @@ struct EditBookView: View {
             TextEditor(text: $summary)
                 .padding(5)
                 .overlay(RoundedRectangle(cornerRadius: /*@START_MENU_TOKEN@*/25.0/*@END_MENU_TOKEN@*/).stroke( Color(uiColor: .tertiaryLabel), lineWidth: 2))
-            NavigationLink {
-                QuotesListView(book: book)
-            }label: {
-                let count = book.quotes?.count ?? 0
-                Label("^[\(count) Quotes](inflect: true)", systemImage: "quote.opening")
+            if let genres = book.genres {
+                ViewThatFits {
+                    ScrollView(.horizontal, showsIndicators: false){
+                        GenresStackView(genres: genres)
+
+                    }
+                }
+            }
+            HStack {
+                Button("Genres", systemImage: "bookmark.fill"){
+                    showGenres.toggle()
+                }
+                .sheet(isPresented: $showGenres){
+                    GenresView(book: book)
+                }
+                NavigationLink {
+                    QuotesListView(book: book)
+                }label: {
+                    let count = book.quotes?.count ?? 0
+                    Label("\(count) Quotes", systemImage: "quote.opening")
+                }
             }
             .buttonStyle(.bordered)
             .frame(maxWidth: /*@START_MENU_TOKEN@*/.infinity/*@END_MENU_TOKEN@*/, alignment: .trailing)
@@ -137,7 +164,6 @@ struct EditBookView: View {
             }
         }
         .onAppear{
-            status = Status(rawValue: book.status)!
             rating = book.rating
             title = book.title
             author = book.author
